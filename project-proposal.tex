@@ -1,0 +1,84 @@
+
+\documentclass[11pt,a4paper]{article}
+\usepackage[hyperref]{naaclhlt2019}
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage{graphicx}
+
+\usepackage{url}
+
+\aclfinalcopy 
+
+\title{Your proposed project title here}
+
+\author{First Author \\
+  {\tt email@domain} \\\And
+  Second Author \\
+  {\tt email@domain} \\\And
+  Third Author \\
+  {\tt email@domain} \\\And
+  Fourth Author \\
+  {\tt email@domain} \\\And
+  Alexander Medeiros \\
+  {\tt ajmed13@gmail.com} \\}
+  
+% \setlength\textwidth{16.0cm}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+Tell us what problem you're going to work on. Provide some motivation for your idea: why is it interesting? Does it have any practical significance? 
+
+Some general guidelines for this proposal document: at least \textbf{3 pages}, \textbf{due Oct 6}. Please use this LaTeX template to write your proposal. \textbf{Your proposal must achieve a \emph{100\% Human} score on \href{https://www.pangram.com/}{Pangram} in order for us to grade it; any other score will automatically receive a zero.}\footnote{Our Gradescope autograder will give you a few submission attempts so that (1) you can make sure your proposal passes this check, but (2) you can't adversarially submit thousands of LLM-generated proposals until you fool the detector.}
+
+\section{Related work}
+
+Check out papers at ACL / EMNLP / NAACL / TACL (archived in the ACL anthology \url{https://www.aclweb.org/anthology}), and related papers at machine learning conferences such as NeurIPS, ICLR, and ICML. Make sure to properly cite them. You can cite a paper parenthetically like this~\cite{andrew2007scalable} or use the citation as a proper noun, as in ``\newcite{borsch2011} show that...'' If you're not familiar with LaTeX, you'll have to add entries to \emph{yourbib.bib} to get them to show up when you cite them. 
+Have others worked on this idea or related ideas? Clearly describe the some of these approaches, along with their pros and cons. Connect your project to those papers. You need to have \textbf{at least five citations} to related papers here. 
+
+\section{Your approach}
+How do you plan to solve the problem you chose? How will you approach it differently from previous work? Remember that this project should take $\sim 2.5$ months of work! 
+
+We expect all groups will make use of AI coding assistants during this project, and as such we will take that into consideration when assessing the amount of proposed work.
+
+\paragraph{What baselines will you use?}
+A baseline is one that is very simple and trivial to implement. For example, ``predict the most common class,'' or ``tag all capitalized words as names,'' or ``select the first sentence in the document''. Sometimes it can be difficult to get a fancy algorithm to beat a baseline. Always ask yourself, ``What's the simplest experiment I could do to (in)validate my hypothesis?'' Talented researchers have a knack for coming up with simple baselines. 
+
+\paragraph{Justify why your group has enough compute to carry out your project}
+If you are proposing to train or fine-tune a large language model, or generally do anything that requires access to large-scale compute / GPUs, explain to us how you plan to acquire said compute. Are there particular cloud providers or services you're going to use?\footnote{One place to start is \url{https://colab.research.google.com}, although you may want to check other providers if you need heavier-duty machines.}  Do your group members have personal computational resources to support the project? The purpose of this section is to try to get you thinking about the potential costs of your ideas and whether you need to scope them down. 
+
+\subsection{Schedule}
+Divide your project into subtasks and estimate how much time each will take. If your group plans to divide subtasks amongst itself, also write who will be responsible for each milestone. If you plan to work on everything together, please say so here. Definitely budget some time for writing the final report, as well as performing an in-depth analysis of any models you build and/or data you collect. Sample schedule below:
+\begin{enumerate}
+    \item Acquire and pre-process data (2 weeks)
+    \item Build models for task (5 weeks)
+    \item Analyze the output of the model, do an error analysis (2 weeks)
+    \item Work on final reports (1 week)
+\end{enumerate}
+
+Note that the subtasks will be different for every project. We welcome all types of projects, as long as some aspect of the project deals with language processing.
+
+\section{Data}
+
+What text data do you plan to use in your project? Where will you get it from? Will you be annotating text yourselves? Convince us that it is available for you, and that you can easily get it, and that it is appropriate for the task and research questions you care about.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.5\textwidth]{figs/sentence.png}
+    \caption{Please feel free to include figures! If you want your figure to span both columns, use \emph{figure*} instead of \emph{figure}.}
+    \label{fig:example}
+\end{figure}
+
+\section{Tools}
+What existing libraries or toolkits are you planning to use? What are you going to use them for? In general, what do you see yourself implementing from scratch vs. taking from existing libraries?
+
+
+
+\bibliographystyle{apalike}
+\footnotesize
+\bibliography{yourbib}
+
+
+\end{document}
