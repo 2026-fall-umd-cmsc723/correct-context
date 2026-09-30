@@ -7,7 +7,7 @@ device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 # Using a code-specialized or highly capable local model
 model_name = "Qwen/Qwen2.5-Coder-7B-Instruct" 
 tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.bfloat16).to(device)
+model = AutoModelForCausalLM.from_pretrained(model_name, dtype=torch.bfloat16).to(device)
 
 # --- Define a Mock HumanEval Coding Task with a Context Dead End ---
 problem_desc = "Write a python function `is_palindrome(s: str) -> bool` that checks if a string is a palindrome."
