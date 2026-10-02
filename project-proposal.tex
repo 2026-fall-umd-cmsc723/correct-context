@@ -4,20 +4,23 @@
 \usepackage{times}
 \usepackage{latexsym}
 \usepackage{graphicx}
+\usepackage{booktabs}
 
 \usepackage{url}
 
 \aclfinalcopy 
 
-\title{Your proposed project title here}
+\title{Do Past Mistakes Haunt Transformers? \\
+  Investigating and Intervening on Erroneous KV Cache Entries \\
+  in Mathematical Reasoning}
 
-\author{First Author \\
+\author{Dileesha [Last Name] \\
   {\tt email@domain} \\\And
-  Second Author \\
+  Joshua [Last Name] \\
   {\tt email@domain} \\\And
-  Third Author \\
+  Despoina [Last Name] \\
   {\tt email@domain} \\\And
-  Fourth Author \\
+  Amey [Last Name] \\
   {\tt email@domain} \\\And
   Alexander Medeiros \\
   {\tt ajmed13@gmail.com} \\}
@@ -29,51 +32,158 @@
 \maketitle
 
 \section{Introduction}
-Tell us what problem you're going to work on. Provide some motivation for your idea: why is it interesting? Does it have any practical significance? 
 
-Some general guidelines for this proposal document: at least \textbf{3 pages}, \textbf{due Oct 6}. Please use this LaTeX template to write your proposal. \textbf{Your proposal must achieve a \emph{100\% Human} score on \href{https://www.pangram.com/}{Pangram} in order for us to grade it; any other score will automatically receive a zero.}\footnote{Our Gradescope autograder will give you a few submission attempts so that (1) you can make sure your proposal passes this check, but (2) you can't adversarially submit thousands of LLM-generated proposals until you fool the detector.}
+Autoregressive language models generate text one token at a time, and every generated token remains permanently visible to the model through the key--value (KV) cache.
+This design choice has a subtle but important consequence: when a model produces an erroneous intermediate step during chain-of-thought reasoning, the faulty tokens stay in the cache and continue to influence all subsequent generation.
+Even if the model later ``self-corrects'' at the text level (for instance, by writing ``wait, that was wrong''), the erroneous key and value vectors remain in the cache and are still attended to during every future forward pass.
 
-\section{Related work}
+This raises a natural question: \textbf{does retaining erroneous KV cache entries actually harm downstream accuracy, or are models robust to their own mistakes?}
 
-Check out papers at ACL / EMNLP / NAACL / TACL (archived in the ACL anthology \url{https://www.aclweb.org/anthology}), and related papers at machine learning conferences such as NeurIPS, ICLR, and ICML. Make sure to properly cite them. You can cite a paper parenthetically like this~\cite{andrew2007scalable} or use the citation as a proper noun, as in ``\newcite{borsch2011} show that...'' If you're not familiar with LaTeX, you'll have to add entries to \emph{yourbib.bib} to get them to show up when you cite them. 
-Have others worked on this idea or related ideas? Clearly describe the some of these approaches, along with their pros and cons. Connect your project to those papers. You need to have \textbf{at least five citations} to related papers here. 
+If the answer is yes---if stale errors poison future computation---then there is a strong motivation for developing mechanisms that actively manage the model's working memory.
+Recent work on context management has explored this space from several angles.
+\newcite{pencil2025} show that training small transformers to erase completed sub-computations from context can dramatically improve length generalization on combinatorial problems.
+\newcite{inftythink2026} demonstrate that compressing finished reasoning segments into summaries preserves performance while bounding context length.
+Meanwhile, \newcite{kvsteering2025} show that KV cache entries can be surgically edited at inference time to steer frozen model behavior.
 
-\section{Your approach}
-How do you plan to solve the problem you chose? How will you approach it differently from previous work? Remember that this project should take $\sim 2.5$ months of work! 
+Our project takes a complementary, empirically-driven approach.
+Rather than proposing a new context management architecture, we focus on \emph{measuring} the causal effect that erroneous KV entries have on downstream generation quality, and then testing whether simple, training-free cache interventions can mitigate those effects.
+We frame this around mathematical reasoning tasks, where (a) errors are frequent and clearly identifiable, (b) ground-truth solutions provide unambiguous correctness signals, and (c) intermediate steps have well-defined logical dependencies.
 
-We expect all groups will make use of AI coding assistants during this project, and as such we will take that into consideration when assessing the amount of proposed work.
-
-\paragraph{What baselines will you use?}
-A baseline is one that is very simple and trivial to implement. For example, ``predict the most common class,'' or ``tag all capitalized words as names,'' or ``select the first sentence in the document''. Sometimes it can be difficult to get a fancy algorithm to beat a baseline. Always ask yourself, ``What's the simplest experiment I could do to (in)validate my hypothesis?'' Talented researchers have a knack for coming up with simple baselines. 
-
-\paragraph{Justify why your group has enough compute to carry out your project}
-If you are proposing to train or fine-tune a large language model, or generally do anything that requires access to large-scale compute / GPUs, explain to us how you plan to acquire said compute. Are there particular cloud providers or services you're going to use?\footnote{One place to start is \url{https://colab.research.google.com}, although you may want to check other providers if you need heavier-duty machines.}  Do your group members have personal computational resources to support the project? The purpose of this section is to try to get you thinking about the potential costs of your ideas and whether you need to scope them down. 
-
-\subsection{Schedule}
-Divide your project into subtasks and estimate how much time each will take. If your group plans to divide subtasks amongst itself, also write who will be responsible for each milestone. If you plan to work on everything together, please say so here. Definitely budget some time for writing the final report, as well as performing an in-depth analysis of any models you build and/or data you collect. Sample schedule below:
+Our contributions are as follows:
 \begin{enumerate}
-    \item Acquire and pre-process data (2 weeks)
-    \item Build models for task (5 weeks)
-    \item Analyze the output of the model, do an error analysis (2 weeks)
-    \item Work on final reports (1 week)
+    \item A controlled experimental framework for injecting, localizing, and removing errors in the KV cache during chain-of-thought reasoning.
+    \item A causal analysis comparing model behavior across clean runs, error-injected runs where the model self-corrects, and error-injected runs where it does not.
+    \item An evaluation of training-free KV cache interventions---masking, removal, and replacement---and their effect on final-answer accuracy and downstream perplexity.
 \end{enumerate}
 
-Note that the subtasks will be different for every project. We welcome all types of projects, as long as some aspect of the project deals with language processing.
+
+\section{Related Work}
+
+\paragraph{Context management and engineering.}
+The recent survey by~\cite{contextengsurvey2025} categorizes context engineering into three families: context retrieval (RAG-style), context processing (in-model modification), and context management (external orchestration).
+Our work falls squarely into context processing: we modify the model's internal representations during inference rather than rewriting the textual prompt.
+\newcite{contextlm2025} take this idea further by training the language model itself to manage its own context, treating context modification as a learned capability rather than an external intervention.
+
+\paragraph{Reasoning trace compression.}
+Several recent methods reduce the length of reasoning traces to improve efficiency and length generalization.
+PENCIL~\cite{pencil2025} trains transformers from scratch to use special reduction tokens that erase completed sub-computations, achieving polynomial context usage on problems that would otherwise require exponential space.
+InftyThink~\cite{inftythink2026} fine-tunes models to summarize finished reasoning segments, replacing detailed intermediate steps with compressed summaries.
+LightThinker~\cite{lightthinker2025} takes a similar iterative compression approach.
+These methods all modify the \emph{text-level} context; our work instead operates directly on the \emph{KV cache representations}, which lets us intervene without retraining.
+
+\paragraph{KV cache pruning and eviction.}
+A separate line of work focuses on which KV entries to keep during long-context generation.
+Dynamic Context Pruning~\cite{dycp2025} retains only question-relevant key--value pairs, while Think Clearly~\cite{thinkclearly2025} proposes keeping only tokens that contribute to the final answer.
+Token skipping~\cite{tokenskipping2025} accelerates inference by selectively removing tokens from the cache.
+These methods optimize for efficiency; we focus instead on whether \emph{error-specific} pruning improves correctness.
+
+\paragraph{KV cache steering and error correction.}
+\newcite{kvsteering2025} demonstrate that editing KV cache entries in frozen models can steer generation behavior, providing a mechanism for inference-time control without parameter updates.
+Concurrent work on inference-time error correction via KV cache steering~\cite{errorcorrection2025} directly manipulates cache entries to correct factual errors.
+MEMENTO~\cite{memento2025} learns to manage memory over long reasoning horizons.
+Our project draws on these techniques but asks a more foundational question: does removing erroneous cache entries actually help, or are models already robust to the noise?
+
+\section{Our Approach}
+
+We structure our investigation around two research questions, each corresponding to a phase of experiments.
+
+\subsection{Question 1: Are Past Mistakes Harmful?}
+
+We construct a controlled experimental setup with three conditions:
+\begin{enumerate}
+    \item \textbf{Clean run.} The model generates a correct chain-of-thought solution from scratch.
+    \item \textbf{Error-injected, self-corrected.} We inject an erroneous intermediate step into the generation (either by prompting or by forcing specific tokens), then allow the model to self-correct in text (e.g., ``wait, that step was wrong, let me redo it'').
+    \item \textbf{Error-injected, uncorrected.} The same injection, but the model continues without textual self-correction.
+\end{enumerate}
+
+For each condition, we run generation both with the original KV cache intact and with the erroneous entries masked or removed. This gives us a $3 \times 2$ experimental grid:
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}l c c c@{}}
+\toprule
+\textbf{Cache} & \textbf{Clean} & \textbf{Self-Corrected} & \textbf{Uncorrected} \\
+\midrule
+Original KV & baseline & \multicolumn{2}{c}{error conditions} \\
+Pruned KV & control & \multicolumn{2}{c}{intervention conditions} \\
+Random KV removal & control & \multicolumn{2}{c}{noise controls} \\
+\bottomrule
+\end{tabular}
+\caption{Experimental grid. Each cell measures final-answer accuracy, downstream perplexity, and attention weight distribution over erroneous vs.\ correct cache entries.}
+\label{tab:grid}
+\end{table}
+
+The random-removal condition is critical: if removing \emph{any} span of tokens helps equally well, then the benefit is due to shorter context rather than error-specific cleanup.
+
+We measure:
+\begin{itemize}
+    \item \textbf{Final-answer accuracy} on the math problem.
+    \item \textbf{Downstream perplexity} of tokens generated after the error region.
+    \item \textbf{Attention analysis}: do later tokens still attend to the erroneous entries even after textual self-correction?
+\end{itemize}
+
+\subsection{Question 2: Can Training-Free Interventions Help?}
+
+If Question~1 reveals that errors are indeed harmful, we evaluate three training-free KV cache interventions:
+\begin{enumerate}
+    \item \textbf{Hard removal.} Physically delete the KV entries corresponding to the erroneous span, analogous to ``ripping out a page from a sketchbook.''
+    \item \textbf{Attention masking.} Zero out attention weights to the erroneous entries without removing them, preserving positional information.
+    \item \textbf{Summary replacement.} Replace the erroneous KV entries with entries derived from a short textual summary of the error (e.g., ``the previous attempt at step 3 was wrong''), inspired by the sketchbook metaphor from our brainstorming discussions.
+\end{enumerate}
+
+We compare these interventions against the clean-run baseline and against each other, measuring both accuracy recovery and computational cost.
+
+\paragraph{What baselines will we use?}
+Our primary baselines are: (1) standard greedy decoding with no intervention (the default behavior), (2) majority-vote self-consistency, where we sample multiple completions and take the majority answer, and (3) the ``just add `wait' '' baseline, where we append a pause token to encourage the model to reconsider without any cache manipulation.
+These baselines are trivial to implement and represent the simplest possible approaches to improving reasoning accuracy.
+
+\paragraph{Justification of compute.}
+We will work with small open-weight models in the 1--7B parameter range (e.g., Qwen2.5-Coder-7B, Llama-3-8B) that fit on free-tier Colab or Kaggle GPUs.
+Our experiments do not require any fine-tuning or training: all interventions are inference-time cache manipulations.
+The most expensive operation is the prefill pass for each problem, which is well within the memory budget of a single A100 or T4 GPU.
+Several group members also have access to Apple Silicon machines with MPS support for local prototyping, as demonstrated in our initial KV cache pruning experiments.
+
+\subsection{Schedule}
+
+We plan to work collaboratively on all milestones, with individual leads noted below.
+
+\begin{enumerate}
+    \item \textbf{Weeks 1--2: Data and infrastructure} (Amey, Alex). Select math benchmarks (GSM8K, MATH subsets). Implement error injection pipeline: methods for forcing erroneous tokens mid-generation. Build KV cache extraction and manipulation utilities (building on our existing \texttt{example-pruning.py} prototype).
+    \item \textbf{Weeks 3--5: Question 1 experiments} (Dileesha, Despoina). Run the $3 \times 3$ experimental grid across at least two model families. Collect attention maps and perplexity measurements. Perform statistical analysis of whether error removal significantly differs from random removal.
+    \item \textbf{Weeks 5--7: Question 2 interventions} (Josh, Alex). Implement hard removal, attention masking, and summary replacement interventions. Benchmark against baselines on the same problem sets.
+    \item \textbf{Weeks 7--8: Analysis and error diagnosis} (All). Deep-dive into failure cases. Characterize which types of errors are most harmful and which interventions are most effective.
+    \item \textbf{Weeks 9--10: Report and presentation} (All). Write the final report. Prepare figures, tables, and the class presentation.
+\end{enumerate}
 
 \section{Data}
 
-What text data do you plan to use in your project? Where will you get it from? Will you be annotating text yourselves? Convince us that it is available for you, and that you can easily get it, and that it is appropriate for the task and research questions you care about.
+We will use publicly available mathematical reasoning benchmarks:
 
-\begin{figure}[t]
-    \centering
-    \includegraphics[width=0.5\textwidth]{figs/sentence.png}
-    \caption{Please feel free to include figures! If you want your figure to span both columns, use \emph{figure*} instead of \emph{figure}.}
-    \label{fig:example}
-\end{figure}
+\begin{itemize}
+    \item \textbf{GSM8K}~(grade school math): 8,500 problems with step-by-step solutions. We will use the test split (1,319 problems) for evaluation and a subset of the training split for developing our error injection pipeline.
+    \item \textbf{MATH} (competition-level): We will select subsets at difficulty levels 1--3 to ensure our small models can solve a meaningful fraction of problems cleanly, providing a sufficient number of ``clean run'' baselines.
+\end{itemize}
+
+No manual annotation is required.
+Error injection is performed programmatically by (a) corrupting numeric values in intermediate steps, (b) forcing the model to generate a known-wrong token at a specific position, or (c) prompting the model with a deliberately flawed partial solution.
+All datasets are freely available and commonly used in the reasoning evaluation literature.
+
 
 \section{Tools}
-What existing libraries or toolkits are you planning to use? What are you going to use them for? In general, what do you see yourself implementing from scratch vs. taking from existing libraries?
 
+We plan to use the following libraries:
+
+\begin{itemize}
+    \item \textbf{Hugging Face Transformers}: Model loading, tokenization, and inference. We rely on the \texttt{DynamicCache} API for direct KV cache manipulation, as demonstrated in our prototype code.
+    \item \textbf{PyTorch}: Tensor operations for KV cache slicing, masking, and replacement. Forward hooks for attention weight extraction.
+    \item \textbf{BauKit / TransformerLens} (if needed): Higher-level tools for activation inspection and intervention, particularly for attention analysis.
+    \item \textbf{Weights \& Biases or TensorBoard}: Experiment tracking and metric logging across the experimental grid.
+\end{itemize}
+
+The KV cache manipulation utilities (pruning, masking, summary injection) will be implemented from scratch, building on our existing prototype.
+Model loading, tokenization, and standard inference will use off-the-shelf Hugging Face APIs.
+We do not plan to train any models; all experiments are inference-time interventions on frozen, pre-trained weights.
 
 
 \bibliographystyle{apalike}
